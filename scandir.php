@@ -52,7 +52,11 @@ class scanDir {
       echo '<div>Absence d\'index.</div>';
       echo '<a href="?scanDir='.$scanDir.'&amp;readDirVolume=true">Calculer le nombre de fichiers et le volume ?</a><br/>';
     }
-    else echo '<a href="?scanDir='.$scanDir.'&amp;deleteTables=true">Supprimer les index de ce répertoire</a>';
+    else {
+      $fileVol=$this->readFileVol($tableFile, $scanDir);
+      echo '<p>'.$dirNb.' répertoires et '.$fileNb.' fichiers indexés, '.$this->fileSize($fileVol).'</p>';
+      echo '<a href="?scanDir='.$scanDir.'&amp;emptyTables=true">Supprimer les index de ce répertoire</a>';
+    }
   }
   function readDir($scanDir){
     echo '
@@ -78,6 +82,21 @@ class scanDir {
   function readNbTables($scanDir, $table){
     try {
       $sql='SELECT COUNT(*) FROM `'.$table.'`';
+      $sql.=' WHERE `rellink` LIKE \''.$scanDir.'%\'';
+      $sth = $this->dbh->prepare($sql);
+      $sth->execute();
+      $result = $sth->fetch();
+      $dbh = null;
+    }
+    catch (PDOException $e) {
+      print "Erreur de lecture!: " . $e->getMessage() . "<br/>";
+      die();
+    }
+    return $result[0];
+  }
+  function readFileVol($table, $scanDir){
+    try {
+      $sql='SELECT sum(`size`) FROM `'.$table.'`';
       $sql.=' WHERE `rellink` LIKE \''.$scanDir.'%\'';
       $sth = $this->dbh->prepare($sql);
       $sth->execute();
@@ -150,14 +169,14 @@ class scanDir {
           echo 'F ';
           echo '<a href="'.$fileName.'">';
           echo $fileName.'</a> - '.$file->getSize().' bytes, '.$file->getExtension().'<br/>';
-          $data=array(array('id'=>'','dirname'=>$name[sizeof($name)-2],'filename'=>$name[sizeof($name)-1],'extension'=>$file->getExtension(),'reallevel'=>sizeof($level)-1,'realpath'=>$realpath,'rellink'=>$fileName,'size'=>$file->getSize(),'c-date'=>$cdate));
+          $data=array(array('id'=>'','dirname'=>$name[sizeof($name)-2],'filename'=>$name[sizeof($name)-1],'extension'=>$file->getExtension(),'reallevel'=>sizeof($level)-1,'realpath'=>$realpath,'rellink'=>$fileName,'size'=>$file->getSize(),'md5'=>md5_file($realpath),'c-date'=>$cdate));
           $this->writeTable($tableFile, $data);
         }
       }
     }
     echo '<h2>Fin d\'écriture</h2>';
   }
-  function deleteTables($scanDir, $tableDir, $tableFile){
+  function emptyTables($scanDir, $tableDir, $tableFile){
     try {
       // Effacer les anciennes occurences
       $sql='DELETE FROM `'.$tableDir.'` WHERE `rellink` LIKE \''.$scanDir.'%\'';

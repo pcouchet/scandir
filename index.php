@@ -9,9 +9,11 @@ $rootDir='../scandir';
 
 if(isset($_GET['scanDir'])) $currentDir=$_GET['scanDir']; else $currentDir=$rootDir;
 $tableDir='dir';
-$fieldsTableDir=array('id','dirname','reallevel','rellink','realpath','filenumber','size','c-date');
+//$fieldsTableDir=array('id','dirname','reallevel','rellink','realpath','filenumber','size','c-date');
+$fieldsTableDir=array('id','dirname','reallevel','rellink','filenumber','size','c-date');
 $tableFile='file';
 $fieldsTableFile=array('id','dirname','filename','extension','reallevel','realpath','rellink','size','c-date');
+$fieldsTableFile=array('id','dirname','filename','extension','reallevel','rellink','size','c-date','md5');
 $linkedField='rellink';
 ?>
 <!doctype html>
@@ -45,7 +47,7 @@ $linkedField='rellink';
 $a= new scanDir;
 // Create index
 if (isset($_GET['writeTables']) && $_GET['writeTables']=='go') $a->writeTables($currentDir, $tableDir, $tableFile);
-if (isset($_GET['deleteTables'])) $a->deleteTables($currentDir, $tableDir, $tableFile);
+if (isset($_GET['emptyTables'])) $a->emptyTables($currentDir, $tableDir, $tableFile);
 
 // Title
 $a->readDirTitle($rootDir, $currentDir, $tableDir, $tableFile);
